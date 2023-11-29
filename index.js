@@ -106,9 +106,23 @@ async function run() {
       }
       res.send({ deliveryman });
     })
-    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+    app.get('/users',  async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
+    })
+    app.get('/users/:id', async (req, res) => {
+      const result = await userCollection.findOne(
+        { _id: new ObjectId(req.params.id) }
+      );
+     
+      console.log(result);
+      if(result){
+       
+        return res.status(200).send(result)
+      }
+      else{
+        return res.status(404).send({message: 'not found'})
+      }
     })
 
 
@@ -122,6 +136,49 @@ async function run() {
       const result = await bookingCollection.find().toArray();
       res.send(result);
     })
+    app.patch('/books/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+          $set: {
+              role: 'admin'
+          }
+      };
+      const result = await bookingCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+  });
+  
+  
+
+    app.get('/bookings', async (req,res)=>{
+      const email = req.query.email;
+      if(!email){
+        res.send([]);
+      }
+      const decodedEmail = req.query.email;
+      if(email !== decodedEmail){
+        return res.status(403).send({error: true, message: 'forviden access'})
+      }
+      const query = {email: email};
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    app.get('/books/:id', async (req, res) => {
+      const result = await bookingCollection.findOne(
+        { _id: new ObjectId(req.params.id) }
+      );
+     
+      console.log(result);
+      if(result){
+       
+        return res.status(200).send(result)
+      }
+      else{
+        return res.status(404).send({message: 'not found'})
+      }
+    })
+
     app.delete('/books/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
@@ -152,6 +209,7 @@ async function run() {
       const result = await bookingCollection.updateOne(filter,updatedDoc);
       res.send(result);
     })
+    
 
 
     // Send a ping to confirm a successful connection
